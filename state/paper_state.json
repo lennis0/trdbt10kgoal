@@ -1,16 +1,45 @@
 {
   "equity": 200,
-  "open_trades": [],
+  "open_trades": [
+    {
+      "trade_id": "f96b806c78d2",
+      "strategy": "reversion_bb",
+      "symbol": "BTCUSDT",
+      "side": "long",
+      "entry_time": "2026-09-07T16:00:00+00:00",
+      "entry_price": 79381.69316400001,
+      "size": 0.0004764839448213477,
+      "stop": 77267.11339956053,
+      "confidence": 0.5,
+      "initial_stop": 77267.11339956053,
+      "portfolio": "paper",
+      "shadow": false,
+      "features": {
+        "rsi": 48.6,
+        "adx": 13.54,
+        "atr": 699.57,
+        "close": 79365.82,
+        "bb_mid": 79670.96,
+        "band_width_atr": 1.75
+      },
+      "regime": "",
+      "exit_time": null,
+      "exit_price": null,
+      "exit_reason": "",
+      "fees": 0.020803256267959296,
+      "slippage": 0.007563307799518195
+    }
+  ],
   "closed_trades": [],
   "last_candle": {
-    "15m": "2026-09-07T19:00:00+00:00",
-    "4h": "2026-09-07T12:00:00+00:00"
+    "15m": "2026-09-07T21:45:00+00:00",
+    "4h": "2026-09-07T16:00:00+00:00"
   },
   "equity_curve": [],
   "started_at": "2026-09-07T19:16:36.592863+00:00",
-  "updated_at": "2026-09-07T19:22:30.242260+00:00",
+  "updated_at": "2026-09-07T22:10:15.607222+00:00",
   "bars_seen": {
-    "15m": 0,
-    "4h": 0
+    "15m": 11,
+    "4h": 1
   }
 }
