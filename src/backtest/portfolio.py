@@ -19,7 +19,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from src.allocator.allocator import Allocator, AllocatorConfig
+from src.allocator.allocator import Allocator, AllocatorConfig, RegimeAllocator
 from src.core import Side
 from src.journal.journal import Journal
 from src.paper.broker import PaperBroker
@@ -52,15 +52,18 @@ def run_portfolio(
     start_equity: float = 200.0,
     journal: Journal | None = None,
     allocator_config: AllocatorConfig | None = None,
-) -> tuple[PaperBroker, Allocator]:
+    regime_allocator: RegimeAllocator | None = None,
+    regime_series: pd.Series | None = None,
+) -> tuple[PaperBroker, Allocator | RegimeAllocator]:
     broker = PaperBroker(
         "portfolio", start_equity,
         taker_fee=config.costs.taker_fee,
         slippage_bps=config.costs.slippage_bps,
     )
     risk = RiskManager(config.risk)
-    allocator = Allocator([leg.strategy.name for leg in legs],
-                          allocator_config or AllocatorConfig())
+    allocator = regime_allocator or Allocator(
+        [leg.strategy.name for leg in legs], allocator_config or AllocatorConfig())
+    use_regime = regime_allocator is not None
 
     for i in range(len(master)):
         row = master.iloc[i]
@@ -69,7 +72,12 @@ def run_portfolio(
 
         risk.start_day(ts.date(), broker.equity)
         broker.check_stops(ts, high, low)
-        allocator.maybe_rebalance(ts, broker.closed_trades)
+        if use_regime:
+            value = regime_series.iloc[i]
+            if pd.notna(value):
+                allocator.update(ts, float(value))
+        else:
+            allocator.maybe_rebalance(ts, broker.closed_trades)
 
         # 1. Aufgeschobene Signale ausfuehren - auf dem Open dieser Kerze
         for leg in legs:

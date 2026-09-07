@@ -127,3 +127,52 @@ class Allocator:
 
     def weight(self, strategy: str) -> float:
         return self.weights.get(strategy, self.config.min_weight)
+
+
+@dataclass
+class RegimeAllocatorConfig:
+    adx_low: float = 20.0     # darunter: klare Seitwaertsphase -> Bot B
+    adx_high: float = 35.0    # darueber: klarer Trend -> Bot A
+    min_weight: float = 0.15
+    max_weight: float = 0.85
+
+
+class RegimeAllocator:
+    """Gewichtet nach MARKTUMFELD statt nach Rendite.
+
+    Der Unterschied zum performance-basierten Allocator ist grundsaetzlich:
+    - Performance-basiert schaut zurueck auf das Ergebnis. Bei einer Fat-Tail-
+      Strategie ist dieser Blick systematisch irrefuehrend, weil sie die meiste
+      Zeit im Minus liegt. Ausserdem entsteht eine Rueckkopplung: schlechte Phase
+      -> kleineres Gewicht -> weniger Chance, sich zu zeigen.
+    - Regimebasiert schaut auf den aktuellen Markt und nutzt aus, was ohnehin
+      bekannt ist: Trendfolge verdient im Trend, Mean-Reversion in Seitwaertsphasen.
+      Das ist genau die Aufteilung, die die Regime-Auswertung im Journal gezeigt hat.
+      Keine Rueckkopplung, kein Warten auf Statistik.
+
+    ADX steigt -> Gewicht wandert zu Bot A, ADX faellt -> zu Bot B. Dazwischen
+    linear, nicht als harter Schalter: ein Schwellwert wuerde bei ADX-Werten,
+    die um die Grenze schwanken, staendig hin- und herschalten.
+    """
+
+    def __init__(self, trend_strategy: str, reversion_strategy: str,
+                 config: RegimeAllocatorConfig | None = None) -> None:
+        self.trend, self.reversion = trend_strategy, reversion_strategy
+        self.config = config or RegimeAllocatorConfig()
+        self.weights = {trend_strategy: 0.5, reversion_strategy: 0.5}
+        self.history: list[tuple[datetime, dict[str, float]]] = []
+
+    def update(self, now: datetime, adx: float) -> None:
+        cfg = self.config
+        span = cfg.adx_high - cfg.adx_low
+        share = 0.5 if span <= 0 else (adx - cfg.adx_low) / span
+        share = min(max(share, 0.0), 1.0)
+
+        w_trend = cfg.min_weight + share * (cfg.max_weight - cfg.min_weight)
+        self.weights = {self.trend: w_trend,
+                        self.reversion: cfg.min_weight + cfg.max_weight - w_trend}
+        if not self.history or self.history[-1][1] != self.weights:
+            self.history.append((now, dict(self.weights)))
+
+    def weight(self, strategy: str) -> float:
+        return self.weights.get(strategy, self.config.min_weight)
