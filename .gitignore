@@ -10,3 +10,6 @@ logs/
 logs/_to_delete/
 
 dashboard/*.html
+
+state/_to_delete/
+state/*.tmp

@@ -40,7 +40,7 @@ def _to_ms(value: str | datetime) -> int:
 
 
 def _cache_path(symbol: str, timeframe: str, start: str, end: str) -> Path:
-    name = f"{symbol}_{timeframe}_{start}_{end}.parquet".replace(":", "-")
+    name = f"{symbol}_{timeframe}_{start}_{end[:10]}.parquet".replace(":", "-")
     return CACHE_DIR / name
 
 
@@ -60,7 +60,11 @@ def fetch_klines(
     if timeframe not in TF_MS:
         raise ValueError(f"Timeframe {timeframe!r} unbekannt. Bekannt: {list(TF_MS)}")
 
-    end = end or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # BUG-FIX: frueher stand hier strftime("%Y-%m-%d"). Das ergibt MITTERNACHT des
+    # heutigen Tages als Endzeit - alle Kerzen von heute fehlten dadurch. Im
+    # Backtest faellt das kaum auf, fuer den Live-Runner ist es toedlich: er
+    # bekommt nie eine neue Kerze zu sehen.
+    end = end or datetime.now(timezone.utc).isoformat(timespec="seconds")
     path = _cache_path(symbol, timeframe, start, end)
 
     if use_cache and path.exists():
@@ -112,8 +116,12 @@ def fetch_klines(
     if not df.empty and _to_ms(df.index[-1].to_pydatetime()) + step > now_ms:
         df = df.iloc[:-1]
 
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(path)
+    # Nur cachen, wenn der Cache auch genutzt werden soll. Der Live-Runner holt
+    # bewusst frische Daten (use_cache=False) und braucht dann weder die Datei
+    # noch die pyarrow-Abhaengigkeit - das haelt den CI-Lauf schlank.
+    if use_cache:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(path)
     return df
 
 

@@ -1,0 +1,49 @@
+name: Paper Trading
+
+# Laeuft alle 15 Minuten. GitHub garantiert die Uhrzeit nicht auf die Minute -
+# bei Last verschieben sich Zeitplaene. Fuer 15m- und 4h-Kerzen unerheblich:
+# der Runner holt beim naechsten Lauf alle verpassten Kerzen nach.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:        # erlaubt manuelles Starten ueber die GitHub-Oberflaeche
+
+# Nur ein Lauf gleichzeitig. Ohne das koennten sich zwei Laeufe ueberschneiden
+# und gegenseitig den Zustand ueberschreiben.
+concurrency:
+  group: paper-trading
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # noetig, um den Zustand zurueckzuschreiben
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Abhaengigkeiten
+        run: pip install pandas requests pyyaml
+
+      - name: Einen Durchlauf ausfuehren
+        run: python -m src.paper.runner
+
+      - name: Zustand sichern
+        run: |
+          git config user.name "paper-bot"
+          git config user.email "actions@github.com"
+          git add state/
+          # Nur committen, wenn sich wirklich etwas geaendert hat - sonst
+          # entsteht alle 15 Minuten ein leerer Commit.
+          if git diff --staged --quiet; then
+            echo "Keine Aenderung am Zustand"
+          else
+            git commit -m "Paper-Trading: Zustand $(date -u '+%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
