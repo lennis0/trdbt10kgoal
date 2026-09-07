@@ -27,7 +27,7 @@ class TrendStrategy(Strategy):
         slow: int = 55,
         atr_period: int = 14,
         stop_atr: float = 2.0,
-        adx_min: float = 20.0,
+        adx_min: float = 30.0,
     ) -> None:
         self.fast, self.slow = fast, slow
         self.atr_period, self.stop_atr = atr_period, stop_atr
@@ -56,7 +56,11 @@ class TrendStrategy(Strategy):
         if not (crossed_up or crossed_dn):
             return None
         if row["adx"] < self.adx_min:
-            return None   # zu schwacher Trend - dort verliert diese Strategie systematisch
+            # Zu schwacher Trend. Der Default 30 ist NICHT frei optimiert, sondern
+            # kommt aus analysis/regime_filter.py: von ADX 0 bis 30 verbessert sich
+            # avg_r monoton, und der Effekt haelt out-of-sample und auf ETHUSDT.
+            # Preis dafuer: nur ~50 Trades pro Jahr. Statistisch duenn - siehe CLAUDE.md.
+            return None
 
         side = Side.LONG if crossed_up else Side.SHORT
         price = row["close"]
