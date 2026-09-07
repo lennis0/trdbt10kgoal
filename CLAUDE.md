@@ -119,13 +119,53 @@ Fertig und getestet:
 - `config/config.yaml` - Symbole, Timeframe, Kosten, Risiko-Limits, die drei Portfolios.
   Noch von keinem Modul eingelesen - Loader fehlt.
 
+- `src/utils/config.py` + `src/utils/indicators.py` - Config-Loader; EMA, ATR, RSI,
+  Bollinger, ADX, Regime-Erkennung. Alle Indikatoren nutzen nur Vergangenheitswerte.
+- `src/risk/sizing.py` - RiskManager. Groesse = (Equity * base_risk * confidence) /
+  Stop-Distanz. Deckelt max_risk und max_leverage, Kill-Switch bei Tagesverlust.
+- `src/strategies/base.py` + `trend.py` - Bot A: EMA-Cross 21/55, ATR-Stop 2.0,
+  ADX-Filter >= 20. 813 Signale auf 94k Kerzen.
+- `src/backtest/engine.py` - Kerze-fuer-Kerze, nutzt dieselben Bausteine wie das
+  spaetere Paper-Trading. Signal wird erst auf dem NAECHSTEN Open ausgefuehrt,
+  Stops werden vor neuen Signalen geprueft (beides gegen Lookahead-Selbstbetrug).
+
+## ERSTER BACKTEST - Ergebnis und Diagnose (BTCUSDT 15m, 2024-01-01 bis 2026-09-07)
+```
+return       -28.4%      trades      766
+max_drawdown  52.2%      winrate     20.1%
+avg_r        -0.122      gebuehren   4131 USD
+sharpe       -0.14       calmar      -0.54
+```
+Die Strategie verliert. Das ist ein ehrliches Ergebnis, kein Bug - und es ist der
+normale erste Backtest. NICHT durch Parameter-Drehen "reparieren" (Overfitting).
+
+Was die Daten sagen:
+1. **Gebuehren sind der Hauptkiller.** 4131 USD Gebuehren bei 10'000 Startkapital.
+   Brutto waere die Strategie etwa +1300 USD, netto -2840. Bei 766 Trades auf 15m
+   frisst jede Runde ~5.4 USD. Jede Verbesserung muss zuerst hier ansetzen:
+   weniger Trades, oder Maker- statt Taker-Orders (Limit-Entries).
+2. **Regime-Auswertung bestaetigt die These:** range -0.273R, trend +0.013R.
+   Der ADX-Filter bei 20 ist zu lasch, 363 von 766 Trades laufen im falschen Umfeld.
+3. **Confidence ist wertlos** - Kalibrierung zeigt keinen Zusammenhang zwischen
+   Confidence und avg_r. Ursache ist ein Konstruktionsfehler: `spread_atr` ist im
+   Moment des EMA-Crosses per Definition fast 0, also besteht die Confidence
+   faktisch nur aus ADX und liegt eng zwischen 0.20 und 0.65.
+   -> Confidence muss aus etwas anderem gebaut werden (z.B. ADX-Steigung,
+   Abstand zu einer laengeren MA, Volumen). Erst danach ist Sizing sinnvoll.
+
 Naechste Schritte in dieser Reihenfolge:
-1. Config-Loader (`src/utils/config.py`), damit die Werte aus config.yaml auch greifen.
-2. `src/risk/` - Sizing aus Confidence + ATR, harte Limits, Kill-Switch.
-3. `src/strategies/` - Bot A (Trendfolge) und Bot B (Mean-Reversion).
-4. `src/backtest/` - Engine + Metriken (Calmar, Sharpe, MaxDD, Winrate).
+1. Kosten-Sensitivitaet messen: wie sieht dasselbe Ergebnis mit Maker-Fee aus?
+   Zeigt, ob das Problem die Strategie ist oder die Ausfuehrung.
+2. Strengerer Regime-Filter (nur Trend handeln) - erwartbar weniger, bessere Trades.
+3. Confidence neu bauen und Kalibrierung erneut pruefen.
+4. `src/strategies/reversion.py` - Bot B (Mean-Reversion) als Gegenspieler.
 5. `src/allocator/` - Gewichtung, Shadow-Mode.
 6. `src/dashboard/` - Lightweight Charts.
 
-Aufraeumen: `logs/_to_delete/` enthaelt Test-Datenbanken aus der SQLite-Fehlersuche.
-Kann der User loeschen, wird nicht gebraucht.
+Wichtig fuer das naechste Modell: Punkte 1-3 sind strukturelle Fragen, keine
+Parameter-Suche. Wer hier anfaengt, EMA-Laengen durchzuprobieren bis die Kurve
+schoen ist, hat das Projekt verloren.
+
+Git: Repo liegt auf https://github.com/lennis0/trdbt10kgoal (privat), Branch main.
+Achtung auf FUSE-/Netz-Mounts: git hinterlaesst .lock-Dateien, die der User
+manuell loeschen muss (Claude darf auf dem Geraet nicht loeschen).
