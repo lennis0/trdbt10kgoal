@@ -30,8 +30,8 @@ def rsi(series: pd.Series, period: int = 14) -> pd.Series:
     delta = series.diff()
     gain = delta.clip(lower=0).ewm(alpha=1 / period, adjust=False).mean()
     loss = (-delta.clip(upper=0)).ewm(alpha=1 / period, adjust=False).mean()
-    rs = gain / loss.replace(0, pd.NA)
-    return (100 - 100 / (1 + rs)).fillna(50.0)
+    rs = gain / loss.replace(0, float("nan"))
+    return (100 - 100 / (1 + rs)).fillna(50.0).astype(float)
 
 
 def bollinger(series: pd.Series, period: int = 20, std: float = 2.0):
