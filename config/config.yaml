@@ -1,0 +1,21 @@
+# Zentrale Projektkonfiguration
+market:
+  symbols: [BTCUSDT, ETHUSDT]
+  timeframe: "15m"
+  history_start: "2024-01-01"
+
+# Kosten. Bewusst konservativ - lieber im Backtest zu pessimistisch als live ueberrascht.
+costs:
+  taker_fee: 0.00055      # 0.055% pro Seite, Binance Taker ohne Rabatte
+  slippage_bps: 2.0       # 2 Basispunkte = 0.02% pro Fill
+
+risk:
+  base_risk_pct: 0.01     # 1% Equity-Risiko pro Trade bei confidence 1.0
+  max_risk_pct: 0.02      # harte Obergrenze
+  max_leverage: 3.0
+  daily_loss_kill_pct: 0.05   # Kill-Switch bei 5% Tagesverlust
+
+portfolios:                # die drei Bots, je eigenes virtuelles Wallet
+  trend:      {start_equity: 10000}
+  reversion:  {start_equity: 10000}
+  allocator:  {start_equity: 10000}

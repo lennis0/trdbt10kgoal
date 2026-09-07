@@ -1,0 +1,7 @@
+pandas
+numpy
+ccxt
+python-dotenv
+pyyaml
+matplotlib
+backtesting

@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+config/secrets.yaml
+data/raw/
+logs/
+
+# Testreste, koennen weg
+logs/_to_delete/
