@@ -84,6 +84,8 @@ def tick(verbose: bool = True) -> dict:
             continue
 
         new_bars = data[data.index > last_seen_ts]
+        state.setdefault("bars_seen", {})
+        state["bars_seen"][timeframe] = state["bars_seen"].get(timeframe, 0) + len(new_bars)
         if new_bars.empty:
             continue
 
@@ -157,21 +159,61 @@ def _start_for(timeframe: str) -> str:
     return (pd.Timestamp.utcnow() - pd.Timedelta(days=days)).strftime("%Y-%m-%d")
 
 
+# Erwartete Handelsfrequenz aus dem Backtest (BTCUSDT, 2024-01 bis 2026-09).
+# Dient nur der Einordnung im Status - keine Vorhersage.
+TRADES_PER_YEAR = 85
+
+
 def status() -> None:
+    """Zeigt den Stand - und vor allem, ob der Bot ueberhaupt noch lebt.
+
+    Der wichtigste Teil ist die Lebenszeichen-Pruefung. Ein Bot ohne Signale und
+    ein Bot mit kaputter Datenverbindung sehen von aussen identisch aus: beide
+    machen nichts. Deshalb wird hier geprueft, ob noch Kerzen ankommen - und
+    nicht nur, ob Trades entstehen.
+    """
     s = state_mod.load()
     if s.get("equity") is None:
         print("Noch kein Zustand - der Bot lief noch nie.")
         return
-    start = s.get("started_at", "?")[:10]
+
+    now = datetime.now(timezone.utc)
     closed = s["closed_trades"]
     wins = [t for t in closed if (t.pnl or 0) > 0]
-    print(f"Paper-Trading seit {start}")
-    print(f"  Equity        {s['equity']:.2f} CHF")
+
+    started = s.get("started_at")
+    days = (now - datetime.fromisoformat(started)).total_seconds() / 86400 if started else 0
+    expected = TRADES_PER_YEAR * days / 365
+
+    print(f"Paper-Trading seit {started[:10] if started else '?'}  ({days:.1f} Tage)")
+    print(f"  Equity        {s['equity']:.2f} CHF  ({s['equity'] / 200 - 1:+.1%})")
     print(f"  Offen         {len(s['open_trades'])}")
     print(f"  Abgeschlossen {len(closed)}"
-          + (f" | Winrate {len(wins)/len(closed)*100:.0f}%" if closed else ""))
+          + (f" | Winrate {len(wins) / len(closed) * 100:.0f}%" if closed else "")
+          + f"   (erwartet nach {days:.1f} Tagen: ~{expected:.1f})")
+
     for t in s["open_trades"]:
         print(f"    {t.strategy} {t.side.value} @ {t.entry_price:.2f} Stop {t.stop:.2f}")
+
+    # -- Lebenszeichen --------------------------------------------------
+    print("\n  Lebenszeichen:")
+    updated = s.get("updated_at")
+    if updated:
+        age_min = (now - datetime.fromisoformat(updated)).total_seconds() / 60
+        mark = "ok" if age_min < 60 else "ACHTUNG - laeuft der Bot noch?"
+        print(f"    Letzter Lauf      vor {age_min:.0f} min   {mark}")
+
+    for timeframe, iso in s.get("last_candle", {}).items():
+        age_min = (now - datetime.fromisoformat(iso)).total_seconds() / 60
+        limit = {"15m": 45, "1h": 150, "4h": 600}.get(timeframe, 600)
+        mark = "ok" if age_min < limit else "ACHTUNG - keine frischen Daten"
+        seen = s.get("bars_seen", {}).get(timeframe, 0)
+        print(f"    {timeframe:<4} letzte Kerze  vor {age_min:>4.0f} min   "
+              f"{seen} verarbeitet   {mark}")
+
+    if not closed and days < 21:
+        print("\n  Noch keine Trades - bei ~85 Trades/Jahr ist das bis etwa "
+              "3 Wochen unauffaellig.")
 
 
 if __name__ == "__main__":
