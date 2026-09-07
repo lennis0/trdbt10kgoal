@@ -12,7 +12,15 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-BASE_URL = "https://api.binance.com/api/v3/klines"
+# Reihenfolge ist wichtig. data-api.binance.vision ist Binances oeffentlicher
+# Endpunkt NUR fuer Marktdaten - er hat keine Laendersperre und funktioniert
+# damit auch auf GitHub-Actions-Maschinen, die in den USA stehen.
+# api.binance.com antwortet von dort mit HTTP 451 ("restricted location").
+# Genau daran ist der erste CI-Lauf gescheitert.
+ENDPOINTS = [
+    "https://data-api.binance.vision/api/v3/klines",
+    "https://api.binance.com/api/v3/klines",
+]
 MAX_LIMIT = 1000  # Maximum Kerzen pro Request bei Binance
 
 CACHE_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
@@ -76,19 +84,24 @@ def fetch_klines(
     cursor = start_ms
 
     while cursor < end_ms:
-        resp = requests.get(
-            BASE_URL,
-            params={
-                "symbol": symbol,
-                "interval": timeframe,
-                "startTime": cursor,
-                "endTime": end_ms,
-                "limit": MAX_LIMIT,
-            },
-            timeout=15,
-        )
-        resp.raise_for_status()
-        batch = resp.json()
+        params = {
+            "symbol": symbol,
+            "interval": timeframe,
+            "startTime": cursor,
+            "endTime": end_ms,
+            "limit": MAX_LIMIT,
+        }
+        batch, last_error = None, None
+        for url in ENDPOINTS:
+            try:
+                resp = requests.get(url, params=params, timeout=15)
+                resp.raise_for_status()
+                batch = resp.json()
+                break
+            except requests.RequestException as exc:
+                last_error = exc
+        if batch is None:
+            raise RuntimeError(f"Kein Binance-Endpunkt erreichbar: {last_error}")
         if not batch:
             break
         rows.extend(batch)

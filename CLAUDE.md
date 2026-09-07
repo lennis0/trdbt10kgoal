@@ -213,6 +213,20 @@ User nicht zustande, sein Rechner laeuft nur 2 Tage die Woche.
 - `workflow_dispatch` erlaubt manuelles Starten zum Testen.
 - Zeitplaene sind nicht minutengenau, GitHub verschiebt bei Last. Fuer 15m/4h egal.
 
+### GEOSPERRE - der Grund, warum der erste CI-Lauf scheiterte
+`api.binance.com` antwortet von US-IP-Adressen mit **HTTP 451**
+("Service unavailable from a restricted location"). GitHub-Actions-Maschinen
+stehen in den USA. Vom Rechner des Users (Schweiz) funktioniert derselbe Aufruf
+problemlos - der Fehler tritt also NUR in CI auf und ist lokal nicht reproduzierbar.
+
+Loesung: `data-api.binance.vision` als erster Endpunkt in `ENDPOINTS`
+(src/data/klines.py). Das ist Binances oeffentlicher Endpunkt nur fuer
+Marktdaten, ohne Laendersperre. `api.binance.com` bleibt als Fallback.
+Getestet: von einer US-Maschine liefert data-api 200, api.binance.com 451.
+
+Wer hier spaeter eine andere Boerse anbindet: immer zuerst pruefen, ob deren API
+aus den USA erreichbar ist, sonst laeuft es lokal und stirbt in CI.
+
 ## Offene Punkte
 1. Workflow einmal manuell starten und pruefen, ob er sauber durchlaeuft.
 2. Dashboard um Portfolio-Sicht und Live-Zustand erweitern.

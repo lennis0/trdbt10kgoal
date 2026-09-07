@@ -156,7 +156,7 @@ def _start_for(timeframe: str) -> str:
     """Genug Historie fuer den Indikator-Vorlauf, aber nicht mehr."""
     minutes = {"15m": 15, "1h": 60, "4h": 240}[timeframe]
     days = max(int(WARMUP_BARS * minutes / 1440) + 2, 5)
-    return (pd.Timestamp.utcnow() - pd.Timedelta(days=days)).strftime("%Y-%m-%d")
+    return (pd.Timestamp.now("UTC") - pd.Timedelta(days=days)).strftime("%Y-%m-%d")
 
 
 # Erwartete Handelsfrequenz aus dem Backtest (BTCUSDT, 2024-01 bis 2026-09).
