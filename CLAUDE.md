@@ -177,17 +177,56 @@ Trades ueber 1x. Kleinste Order 17 USDT (Boersen-Minimum ~5 USDT). Also unkritis
 das Konto ist klein genug fuer Spot, aber die 5% ueber 1x brauchen Futures oder
 werden gekappt.
 
-Naechste Schritte in dieser Reihenfolge:
-1. Strengerer Regime-Filter (nur Trend handeln) - erwartbar weniger, bessere Trades.
-2. Confidence neu bauen und Kalibrierung erneut pruefen.
-3. `src/strategies/reversion.py` - Bot B (Mean-Reversion) als Gegenspieler.
-4. `src/allocator/` - Gewichtung, Shadow-Mode.
-5. `src/dashboard/` - Lightweight Charts.
+## PAPER-RUNNER (src/paper/runner.py) - laeuft
+```
+python -m src.paper.runner            ein Durchlauf, dann Ende (fuer Cron)
+python -m src.paper.runner --loop     dauerhaft, prueft jede Minute
+python -m src.paper.runner --status   nur Stand anzeigen
+```
+Zustandslos: Zustand laden (`state/paper_state.json`, JSON, atomar geschrieben)
+-> neue Kerzen verarbeiten -> speichern -> beenden. Dadurch laeuft er als Cron-Job
+UND ist absturzsicher; verpasste Kerzen holt er beim naechsten Lauf nach.
+Verarbeitet nur ABGESCHLOSSENE Kerzen.
 
-Wichtig fuer das naechste Modell: Punkte 1-3 sind strukturelle Fragen, keine
-Parameter-Suche. Wer hier anfaengt, EMA-Laengen durchzuprobieren bis die Kurve
-schoen ist, hat das Projekt verloren.
+REST statt WebSocket, bewusst: ein WebSocket braucht einen Dauerprozess.
+Fuer 15m/4h reicht Polling und laeuft ueberall.
 
-Git: Repo liegt auf https://github.com/lennis0/trdbt10kgoal (privat), Branch main.
-Achtung auf FUSE-/Netz-Mounts: git hinterlaesst .lock-Dateien, die der User
-manuell loeschen muss (Claude darf auf dem Geraet nicht loeschen).
+Unterschied zum Backtest, bekannt und dokumentiert: der Runner fuehrt zum
+SCHLUSSKURS der Signalkerze aus, der Backtest zum naechsten Open. Bei einem
+Cron-Lauf alle 15 Minuten gibt es kein "naechstes Open" zum Handeln. Leicht
+optimistischer; Gebuehren und Slippage identisch gerechnet, also bleiben die
+Journale vergleichbar. Beim Auswerten der Live-Phase mitdenken.
+
+BUG-FIX dabei gefunden: `fetch_klines` nahm als Standard-Endzeit
+`strftime("%Y-%m-%d")` - also MITTERNACHT des heutigen Tages. Alle Kerzen von
+heute fehlten. Im Backtest kaum sichtbar, fuer den Live-Runner toedlich: er
+haette nie eine neue Kerze gesehen. Jetzt volle ISO-Zeit.
+
+## HOSTING: GitHub Actions (.github/workflows/paper-trading.yml)
+Cron alle 15 Minuten, Zustand wird nach jedem Lauf ins Repo committet. Damit
+laeuft der Bot 24/7 ohne Server und ohne Zahlungsmittel - ein VPS kam fuer den
+User nicht zustande, sein Rechner laeuft nur 2 Tage die Woche.
+- Privates Repo: 2000 Freiminuten/Monat, reicht NICHT fuer 15m-Takt (~2880 Laeufe).
+  Oeffentliches Repo: unbegrenzt. Deshalb ist das Repo jetzt oeffentlich.
+- GitHub deaktiviert Zeitplaene nach 60 Tagen ohne Repo-Aktivitaet. Wenn der Bot
+  ploetzlich stillsteht: ZUERST hier nachsehen.
+- `workflow_dispatch` erlaubt manuelles Starten zum Testen.
+- Zeitplaene sind nicht minutengenau, GitHub verschiebt bei Last. Fuer 15m/4h egal.
+
+## Offene Punkte
+1. Workflow einmal manuell starten und pruefen, ob er sauber durchlaeuft.
+2. Dashboard um Portfolio-Sicht und Live-Zustand erweitern.
+3. Supabase als Zustandsspeicher statt JSON-im-Repo - vom User angedacht, noch
+   nicht entschieden. Waere sauberer und ersetzt zugleich das zickige SQLite.
+4. Eine dritte, wirklich andere Strategie. Laut Allocator-Analyse der groesste
+   Hebel auf das Ergebnis - mehr Ertragsquellen schlagen besseres Verteilen.
+
+Wichtig fuer das naechste Modell: Die offenen Punkte sind strukturelle Fragen.
+Wer hier anfaengt, EMA-Laengen durchzuprobieren bis die Kurve schoen ist, hat das
+Projekt verloren. Jede Aenderung gegen eine Referenz messen und out-of-sample
+pruefen - so sind alle bisherigen Entscheidungen zustande gekommen.
+
+Git: Repo auf https://github.com/lennis0/trdbt10kgoal, Branch main, oeffentlich.
+Auf FUSE-/Netz-Mounts hinterlaesst git .lock-Dateien, weil dort nicht geloescht
+werden darf. `./gitfix.sh` vor jedem git-Befehl raeumt sie weg (verschiebt sie
+nach .git/trash/). Pushen kann Claude nicht - keine Credentials im Container.
