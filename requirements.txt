@@ -1,7 +1,6 @@
-pandas
-numpy
-ccxt
-python-dotenv
-pyyaml
-matplotlib
-backtesting
+# Nur was tatsaechlich benutzt wird. Bewusst schlank gehalten:
+# jede Abhaengigkeit ist etwas, das kaputtgehen kann.
+pandas          # Kerzen, Indikatoren, Auswertung
+requests        # Binance Public REST
+pyyaml          # config/config.yaml
+pyarrow         # Parquet-Cache fuer historische Daten (nur lokal noetig)
