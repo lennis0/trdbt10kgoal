@@ -153,14 +153,36 @@ Was die Daten sagen:
    -> Confidence muss aus etwas anderem gebaut werden (z.B. ADX-Steigung,
    Abstand zu einer laengeren MA, Volumen). Erst danach ist Sizing sinnvoll.
 
+## KOSTEN-SENSITIVITAET (analysis/cost_sensitivity.py) - das zentrale Ergebnis
+Startkapital jetzt 200 pro Bot (vom User gesetzt). Prozentzahlen aendern sich dadurch
+nicht - Gebuehren und Groessen skalieren linear mit dem Kapital.
+```
+Szenario                     Return    MaxDD    avg R   Gebuehren
+ohne Gebuehren (rohe Idee)    65.9%    13.3%    0.240      0.00
+Futures Maker  0.020%         16.5%    29.4%    0.082     37.71
+Futures Taker  0.055%        -28.4%    52.2%   -0.122     82.62
+Spot Standard  0.100%        -51.9%    66.5%   -0.286    126.44
+```
+Interpretation: **die Handelsidee hat einen echten Edge (+0.240R brutto), aber einen
+duennen.** Taker-Gebuehren plus Slippage kosten 0.362R pro Trade und drehen ihn ins
+Minus. Das Problem ist damit primaer die AUSFUEHRUNG, nicht die Strategie.
+
+Warnung fuer das naechste Modell: die Maker-Zeile ist optimistisch. Limit-Orders
+werden nicht garantiert gefuellt, und bei Trendfolge sind es systematisch die guten
+Ausbrueche, die davonlaufen ohne zu fuellen (adverse selection). Die 16.5% sind eine
+Obergrenze, kein erwartbares Ergebnis.
+
+Hebel/Ordergroessen bei 200 Startkapital: Hebel median 0.43x, max 2.08x, nur 5% der
+Trades ueber 1x. Kleinste Order 17 USDT (Boersen-Minimum ~5 USDT). Also unkritisch -
+das Konto ist klein genug fuer Spot, aber die 5% ueber 1x brauchen Futures oder
+werden gekappt.
+
 Naechste Schritte in dieser Reihenfolge:
-1. Kosten-Sensitivitaet messen: wie sieht dasselbe Ergebnis mit Maker-Fee aus?
-   Zeigt, ob das Problem die Strategie ist oder die Ausfuehrung.
-2. Strengerer Regime-Filter (nur Trend handeln) - erwartbar weniger, bessere Trades.
-3. Confidence neu bauen und Kalibrierung erneut pruefen.
-4. `src/strategies/reversion.py` - Bot B (Mean-Reversion) als Gegenspieler.
-5. `src/allocator/` - Gewichtung, Shadow-Mode.
-6. `src/dashboard/` - Lightweight Charts.
+1. Strengerer Regime-Filter (nur Trend handeln) - erwartbar weniger, bessere Trades.
+2. Confidence neu bauen und Kalibrierung erneut pruefen.
+3. `src/strategies/reversion.py` - Bot B (Mean-Reversion) als Gegenspieler.
+4. `src/allocator/` - Gewichtung, Shadow-Mode.
+5. `src/dashboard/` - Lightweight Charts.
 
 Wichtig fuer das naechste Modell: Punkte 1-3 sind strukturelle Fragen, keine
 Parameter-Suche. Wer hier anfaengt, EMA-Laengen durchzuprobieren bis die Kurve

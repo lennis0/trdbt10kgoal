@@ -15,7 +15,10 @@ risk:
   max_leverage: 3.0
   daily_loss_kill_pct: 0.05   # Kill-Switch bei 5% Tagesverlust
 
-portfolios:                # die drei Bots, je eigenes virtuelles Wallet
-  trend:      {start_equity: 10000}
-  reversion:  {start_equity: 10000}
-  allocator:  {start_equity: 10000}
+# Die drei Bots, je eigenes virtuelles Wallet.
+# 200 = Startkapital pro Bot. Die Paare sind USDT-notiert, 200 CHF sind grob
+# 220 USDT - fuer Backtests vernachlaessigbar, vor einem Livegang sauber umrechnen.
+portfolios:
+  trend:      {start_equity: 200}
+  reversion:  {start_equity: 200}
+  allocator:  {start_equity: 200}
