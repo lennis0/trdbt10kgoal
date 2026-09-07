@@ -82,6 +82,7 @@ class PaperBroker:
             entry_price=fill,
             size=size,
             stop=stop,
+            initial_stop=stop,
             confidence=confidence,
             portfolio=self.name,
             shadow=shadow,
@@ -112,6 +113,21 @@ class PaperBroker:
         return trade
 
     # -- Bar-Verarbeitung --------------------------------------------------
+
+    def trail_stops(self, high: float, low: float, atr: float, distance: float) -> None:
+        """Zieht Stops nach, sobald der Kurs zugunsten der Position laeuft.
+
+        Der Stop wird NUR in Gewinnrichtung verschoben, nie zurueck. Sonst wuerde
+        man das Anfangsrisiko nachtraeglich vergroessern - der klassische Weg, aus
+        einem kleinen Verlust einen grossen zu machen.
+        """
+        if atr <= 0 or distance <= 0:
+            return
+        for t in self.open_trades.values():
+            if t.side is Side.LONG:
+                t.stop = max(t.stop, high - distance * atr)
+            else:
+                t.stop = min(t.stop, low + distance * atr)
 
     def check_stops(self, timestamp: datetime, high: float, low: float) -> list[Trade]:
         """Prueft Stops gegen High/Low der Kerze.

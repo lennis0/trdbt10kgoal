@@ -53,6 +53,7 @@ class Trade:
     size: float
     stop: float
     confidence: float
+    initial_stop: float | None = None  # Stop beim Einstieg, fuer R unveraenderlich
     portfolio: str = "default"        # welcher der Bots (A/B/...)
     shadow: bool = False              # hypothetischer Trade einer nicht allokierten Strategie
     features: dict[str, float] = field(default_factory=dict)
@@ -79,9 +80,15 @@ class Trade:
 
     @property
     def r_multiple(self) -> float | None:
-        """PnL in Vielfachen des Anfangsrisikos. Die wichtigste Kennzahl pro Trade:
-        vergleichbar ueber verschiedene Positionsgroessen und Maerkte hinweg."""
+        """PnL in Vielfachen des ANFANGSrisikos.
+
+        Bezugsgroesse ist bewusst `initial_stop`, nicht `stop`: bei einem Trailing-Stop
+        wandert `stop` waehrend des Trades mit. Rechnet man R gegen den mitgewanderten
+        Stop, veraendert sich nachtraeglich der Nenner und die Zahl wird unsinnig -
+        ein Gewinntrade kann dann ein negatives R bekommen.
+        """
         if self.pnl is None:
             return None
-        risk = abs(self.entry_price - self.stop) * self.size
+        reference = self.initial_stop if self.initial_stop is not None else self.stop
+        risk = abs(self.entry_price - reference) * self.size
         return self.pnl / risk if risk > 0 else 0.0

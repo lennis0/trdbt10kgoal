@@ -40,6 +40,15 @@ class TrendStrategy(Strategy):
         out["atr"] = atr(out, self.atr_period)
         out["adx"] = adx(out, self.atr_period)
         out["spread_atr"] = (out["ema_fast"] - out["ema_slow"]) / out["atr"]
+
+        # Kandidaten-Merkmale fuer die Confidence. Bewusst VOR dem Blick auf die
+        # Ergebnisse festgelegt - jedes hat eine Begruendung, warum es mit dem
+        # Erfolg eines Trendfolge-Trades zu tun haben koennte:
+        out["adx_slope"] = out["adx"].diff(8)              # zieht der Trend an?
+        out["ema_long"] = ema(out["close"], self.slow * 4)  # uebergeordnete Richtung
+        out["dist_long_atr"] = (out["close"] - out["ema_long"]) / out["atr"]
+        out["atr_pct"] = out["atr"] / out["close"]          # Volatilitaetsniveau
+        out["atr_rel"] = out["atr_pct"] / out["atr_pct"].rolling(500).mean()
         return out
 
     def signal(self, df: pd.DataFrame, i: int, symbol: str) -> Signal | None:
@@ -67,10 +76,20 @@ class TrendStrategy(Strategy):
         stop = price - self.stop_atr * row["atr"] if side is Side.LONG \
             else price + self.stop_atr * row["atr"]
 
-        # Confidence aus Trendstaerke (ADX 20..50) und EMA-Abstand (0..1 ATR)
-        adx_score = min(max((row["adx"] - self.adx_min) / 30.0, 0.0), 1.0)
-        spread_score = min(abs(row["spread_atr"]), 1.0)
-        confidence = round(min(max(0.2 + 0.5 * adx_score + 0.3 * spread_score, 0.0), 1.0), 3)
+        # Confidence bewusst konstant 1.0 = feste Risikoquote pro Trade.
+        #
+        # Der urspruengliche Plan war eine Confidence aus ADX und EMA-Abstand. Zwei
+        # Messungen haben das widerlegt (analysis/confidence_features.py):
+        # 1. Keines der Kandidaten-Merkmale (adx, adx_slope, dist_long_atr, atr_rel,
+        #    trend_align) trennt in- UND out-of-sample konsistent. Mehrere drehen
+        #    das Vorzeichen zwischen den Zeitraeumen.
+        # 2. Bei 13.9% Winrate stammen 59% des Gesamtgewinns aus 5 von 266 Trades.
+        #    Auf so einer Verteilung ist jede Confidence-Gewichtung Rauschen-Fitting.
+        #
+        # Solange nichts nachweislich vorhersagt, ist die feste Quote die ehrliche
+        # Variante. Das Feld bleibt im Interface - wenn spaeter etwas trennt,
+        # wird nur diese Zeile ersetzt.
+        confidence = 1.0
 
         return Signal(
             timestamp=df.index[i], symbol=symbol, side=side,
@@ -80,5 +99,9 @@ class TrendStrategy(Strategy):
                 "atr": round(float(row["atr"]), 2),
                 "spread_atr": round(float(row["spread_atr"]), 3),
                 "close": round(float(price), 2),
+                "adx_slope": round(float(row["adx_slope"]), 3) if pd.notna(row["adx_slope"]) else 0.0,
+                "dist_long_atr": round(float(row["dist_long_atr"]), 3) if pd.notna(row["dist_long_atr"]) else 0.0,
+                "atr_rel": round(float(row["atr_rel"]), 3) if pd.notna(row["atr_rel"]) else 1.0,
+                "trend_align": 1.0 if (side is Side.LONG) == (row["close"] > row["ema_long"]) else 0.0,
             },
         )

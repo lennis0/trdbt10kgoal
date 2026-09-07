@@ -33,6 +33,7 @@ def run_backtest(
     portfolio: str = "trend",
     journal: Journal | None = None,
     shadow: bool = False,
+    trail_atr: float | None = None,
 ) -> PaperBroker:
     data = strategy.prepare(df)
     data["regime"] = regime(df)
@@ -53,8 +54,14 @@ def run_backtest(
 
         risk.start_day(ts.date(), broker.equity)
 
-        # 1. Stops zuerst - pessimistische Annahme
+        # 1. Stops zuerst - pessimistische Annahme.
+        #    Erst pruefen, dann nachziehen: innerhalb einer Kerze weiss man nicht,
+        #    ob der Stop vor oder nach dem neuen Hoch erreicht wurde. Die
+        #    pessimistische Reihenfolge ist "Stop zuerst".
         broker.check_stops(ts, float(row["high"]), float(row["low"]))
+        if trail_atr is not None and broker.open_trades:
+            broker.trail_stops(float(row["high"]), float(row["low"]),
+                               float(row["atr"]), trail_atr)
 
         # 2. Aufgeschobenes Signal auf dem Open ausfuehren
         if pending is not None:
