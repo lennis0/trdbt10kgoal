@@ -227,6 +227,21 @@ Getestet: von einer US-Maschine liefert data-api 200, api.binance.com 451.
 Wer hier spaeter eine andere Boerse anbindet: immer zuerst pruefen, ob deren API
 aus den USA erreichbar ist, sonst laeuft es lokal und stirbt in CI.
 
+### ADX-BUG - der zweite CI-Ausfall, und der lehrreichere
+`adx()` benutzte `.replace(0, pd.NA)`. pd.NA macht die Serie zu dtype=object,
+und `ewm().mean()` wirft darauf `DataError: No numeric types to aggregate`.
+
+Ausgeloest wird das nur, wenn `plus_di + minus_di` irgendwo exakt 0 ist. Bei
+94'000 Backtest-Kerzen passiert das nie, bei den wenigen Tagen Vorlauf des
+Live-Runners sofort. **Der Backtest lief also zweieinhalb Jahre sauber, waehrend
+derselbe Code live bei JEDEM Lauf abstuerzte.**
+
+Lehre fuer das naechste Modell: Ein gruener Backtest beweist nicht, dass der Code
+funktioniert - er beweist, dass er auf DIESEN Daten funktioniert. Randfaelle
+tauchen bei kurzen Reihen, flachen Kerzen und frischen Symbolen auf.
+Behoben mit `float("nan")` + `.astype(float)`. `tests/test_indicators.py`
+prueft genau diese Faelle und laeuft jetzt im Workflow VOR dem Handeln.
+
 ## Offene Punkte
 1. Workflow einmal manuell starten und pruefen, ob er sauber durchlaeuft.
 2. Dashboard um Portfolio-Sicht und Live-Zustand erweitern.

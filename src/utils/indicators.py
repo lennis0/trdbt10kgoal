@@ -49,8 +49,14 @@ def adx(df: pd.DataFrame, period: int = 14) -> pd.Series:
     tr = atr(df, period)
     plus_di = 100 * plus_dm.ewm(alpha=1 / period, adjust=False).mean() / tr
     minus_di = 100 * minus_dm.ewm(alpha=1 / period, adjust=False).mean() / tr
-    dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di).replace(0, pd.NA)
-    return dx.ewm(alpha=1 / period, adjust=False).mean().fillna(0.0)
+    # WICHTIG: float("nan") statt pd.NA. pd.NA macht die Serie zu dtype=object,
+    # und ewm() wirft darauf "No numeric types to aggregate". Der Fehler tritt nur
+    # auf, wenn plus_di + minus_di irgendwo exakt 0 ist - das passiert bei kurzen
+    # Datenreihen (Live-Runner: wenige Tage Vorlauf), nicht bei langen Backtests.
+    # Deshalb lief der Backtest jahrelang sauber und der Live-Bot stuerzte ab.
+    total = (plus_di + minus_di).replace(0, float("nan"))
+    dx = (100 * (plus_di - minus_di).abs() / total).astype(float)
+    return dx.ewm(alpha=1 / period, adjust=False).mean().fillna(0.0).astype(float)
 
 
 def regime(df: pd.DataFrame, period: int = 14, threshold: float = 25.0) -> pd.Series:

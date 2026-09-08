@@ -31,6 +31,11 @@ jobs:
       - name: Abhaengigkeiten
         run: pip install pandas requests pyyaml
 
+      # Laeuft vor dem Handeln. Die Indikator-Tests decken genau den Grenzfall ab,
+      # der den Bot zuvor bei jedem Lauf hat abstuerzen lassen.
+      - name: Tests
+        run: python tests/test_indicators.py
+
       - name: Einen Durchlauf ausfuehren
         run: python -m src.paper.runner
 
