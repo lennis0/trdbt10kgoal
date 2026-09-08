@@ -1,0 +1,12 @@
+# Zeilenenden vereinheitlichen.
+#
+# Ohne diese Datei wandelt Git unter Windows beim Auschecken alles auf CRLF um.
+# Da an diesem Repo auch Linux-Umgebungen arbeiten (GitHub Actions und Claude),
+# sieht danach jede Datei als komplett geaendert aus - unbrauchbare Diffs.
+# `text=auto eol=lf` speichert im Repo immer LF, unabhaengig vom Betriebssystem.
+* text=auto eol=lf
+
+# Binaerdateien nie anfassen
+*.parquet binary
+*.png binary
+*.woff2 binary
