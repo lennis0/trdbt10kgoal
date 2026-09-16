@@ -1,33 +1,33 @@
 {
-  "equity": 197.85028344712418,
+  "equity": 198.73268304921538,
   "open_trades": [
     {
-      "trade_id": "e8d44923998c",
+      "trade_id": "9dc350507f07",
       "strategy": "reversion_bb",
       "symbol": "BTCUSDT",
-      "side": "short",
-      "entry_time": "2026-09-14T08:00:00+00:00",
-      "entry_price": 77760.4448,
-      "size": 0.000488574364131239,
-      "stop": 79815.11963308688,
+      "side": "long",
+      "entry_time": "2026-09-16T00:00:00+00:00",
+      "entry_price": 75839.174802,
+      "size": 0.00036075211559095027,
+      "stop": 73069.58841159614,
       "confidence": 0.5,
-      "initial_stop": 79815.11963308688,
+      "initial_stop": 73069.58841159614,
       "portfolio": "paper",
       "shadow": false,
       "features": {
-        "rsi": 53.2,
-        "adx": 15.05,
-        "atr": 679.71,
-        "close": 77776.0,
-        "bb_mid": 77290.81,
-        "band_width_atr": 1.66
+        "rsi": 35.2,
+        "adx": 20.8,
+        "atr": 918.14,
+        "close": 75824.01,
+        "bb_mid": 77218.98,
+        "band_width_atr": 3.67
       },
       "regime": "",
       "exit_time": null,
       "exit_price": null,
       "exit_reason": "",
-      "fees": 0.020895467929997275,
-      "slippage": 0.007599871948935478
+      "fees": 0.015047528514971362,
+      "slippage": 0.005470734404017631
     }
   ],
   "closed_trades": [
@@ -116,11 +116,39 @@
       "exit_reason": "stop",
       "fees": 0.23491986681486346,
       "slippage": 0.08542536626399336
+    },
+    {
+      "trade_id": "e8d44923998c",
+      "strategy": "reversion_bb",
+      "symbol": "BTCUSDT",
+      "side": "short",
+      "entry_time": "2026-09-14T08:00:00+00:00",
+      "entry_price": 77760.4448,
+      "size": 0.000488574364131239,
+      "stop": 79815.11963308688,
+      "confidence": 0.5,
+      "initial_stop": 79815.11963308688,
+      "portfolio": "paper",
+      "shadow": false,
+      "features": {
+        "rsi": 53.2,
+        "adx": 15.05,
+        "atr": 679.71,
+        "close": 77776.0,
+        "bb_mid": 77290.81,
+        "band_width_atr": 1.66
+      },
+      "regime": "",
+      "exit_time": "2026-09-16T00:00:00+00:00",
+      "exit_price": 75839.174802,
+      "exit_reason": "signal",
+      "fees": 0.04127466006281605,
+      "slippage": 0.015009005443261291
     }
   ],
   "last_candle": {
-    "15m": "2026-09-16T03:15:00+00:00",
-    "4h": "2026-09-15T20:00:00+00:00"
+    "15m": "2026-09-16T08:30:00+00:00",
+    "4h": "2026-09-16T04:00:00+00:00"
   },
   "equity_curve": [
     [
@@ -134,12 +162,16 @@
     [
       "2026-09-15T00:00:00+00:00",
       197.85028344712418
+    ],
+    [
+      "2026-09-16T00:00:00+00:00",
+      198.73268304921538
     ]
   ],
   "started_at": "2026-09-07T19:16:36.592863+00:00",
-  "updated_at": "2026-09-16T03:39:46.956189+00:00",
+  "updated_at": "2026-09-16T08:50:40.444721+00:00",
   "bars_seen": {
-    "15m": 801,
-    "4h": 50
+    "15m": 822,
+    "4h": 52
   }
 }
