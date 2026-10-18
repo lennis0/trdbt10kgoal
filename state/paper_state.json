@@ -28,6 +28,36 @@
       "exit_reason": "",
       "fees": 0.015047528514971362,
       "slippage": 0.005470734404017631
+    },
+    {
+      "trade_id": "995ec8cd2528",
+      "strategy": "trend_ema",
+      "symbol": "BTCUSDT",
+      "side": "long",
+      "entry_time": "2026-10-18T23:15:00+00:00",
+      "entry_price": 82182.10313399999,
+      "size": 0.0024341949735628733,
+      "stop": 81779.31018069507,
+      "confidence": 0.5,
+      "initial_stop": 81779.31018069507,
+      "portfolio": "paper",
+      "shadow": false,
+      "features": {
+        "adx": 39.68,
+        "atr": 193.18,
+        "spread_atr": 0.004,
+        "close": 82165.67,
+        "adx_slope": -3.924,
+        "dist_long_atr": 2.876,
+        "atr_rel": 1.032,
+        "trend_align": 1.0
+      },
+      "regime": "",
+      "exit_time": null,
+      "exit_price": null,
+      "exit_reason": "",
+      "fees": 0.11002599430108466,
+      "slippage": 0.04000145218266494
     }
   ],
   "closed_trades": [
@@ -357,7 +387,7 @@
     }
   ],
   "last_candle": {
-    "15m": "2026-10-18T21:00:00+00:00",
+    "15m": "2026-10-18T23:15:00+00:00",
     "4h": "2026-10-18T16:00:00+00:00"
   },
   "equity_curve": [
@@ -407,9 +437,9 @@
     ]
   ],
   "started_at": "2026-09-07T19:16:36.592863+00:00",
-  "updated_at": "2026-10-18T21:29:23.191520+00:00",
+  "updated_at": "2026-10-18T23:33:26.092274+00:00",
   "bars_seen": {
-    "15m": 3944,
+    "15m": 3953,
     "4h": 247
   }
 }
