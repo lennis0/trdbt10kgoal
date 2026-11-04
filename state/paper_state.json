@@ -1,35 +1,6 @@
 {
-  "equity": 183.73291126479887,
-  "open_trades": [
-    {
-      "trade_id": "7c5aaa8bb79f",
-      "strategy": "reversion_bb",
-      "symbol": "BTCUSDT",
-      "side": "short",
-      "entry_time": "2026-11-02T04:00:00+00:00",
-      "entry_price": 78098.22723,
-      "size": 0.0004265774643905534,
-      "stop": 80295.15666888993,
-      "confidence": 0.5,
-      "initial_stop": 80295.15666888993,
-      "portfolio": "paper",
-      "shadow": false,
-      "features": {
-        "rsi": 46.0,
-        "adx": 23.37,
-        "atr": 727.1,
-        "close": 78113.85,
-        "bb_mid": 77765.98,
-        "band_width_atr": 2.32
-      },
-      "regime": "",
-      "exit_time": null,
-      "exit_price": null,
-      "exit_reason": "",
-      "fees": 0.01832321905984387,
-      "slippage": 0.006664321613357558
-    }
-  ],
+  "equity": 182.73821986778964,
+  "open_trades": [],
   "closed_trades": [
     {
       "trade_id": "f96b806c78d2",
@@ -618,11 +589,39 @@
       "exit_reason": "stop",
       "fees": 0.1288471093696858,
       "slippage": 0.04685345734027109
+    },
+    {
+      "trade_id": "7c5aaa8bb79f",
+      "strategy": "reversion_bb",
+      "symbol": "BTCUSDT",
+      "side": "short",
+      "entry_time": "2026-11-02T04:00:00+00:00",
+      "entry_price": 78098.22723,
+      "size": 0.0004265774643905534,
+      "stop": 80295.15666888993,
+      "confidence": 0.5,
+      "initial_stop": 80295.15666888993,
+      "portfolio": "paper",
+      "shadow": false,
+      "features": {
+        "rsi": 46.0,
+        "adx": 23.37,
+        "atr": 727.1,
+        "close": 78113.85,
+        "bb_mid": 77765.98,
+        "band_width_atr": 2.32
+      },
+      "regime": "",
+      "exit_time": "2026-11-04T15:00:00+00:00",
+      "exit_price": 80311.2157002237,
+      "exit_reason": "stop",
+      "fees": 0.0371656441753822,
+      "slippage": 0.013514742480287459
     }
   ],
   "last_candle": {
-    "15m": "2026-11-04T10:00:00+00:00",
-    "4h": "2026-11-04T04:00:00+00:00"
+    "15m": "2026-11-04T17:45:00+00:00",
+    "4h": "2026-11-04T12:00:00+00:00"
   },
   "equity_curve": [
     [
@@ -704,12 +703,16 @@
     [
       "2026-11-04T00:00:00+00:00",
       183.73291126479887
+    ],
+    [
+      "2026-11-04T15:00:00+00:00",
+      182.73821986778964
     ]
   ],
   "started_at": "2026-09-07T19:16:36.592863+00:00",
-  "updated_at": "2026-11-04T10:16:25.178841+00:00",
+  "updated_at": "2026-11-04T18:08:48.193616+00:00",
   "bars_seen": {
-    "15m": 5532,
-    "4h": 346
+    "15m": 5563,
+    "4h": 348
   }
 }
